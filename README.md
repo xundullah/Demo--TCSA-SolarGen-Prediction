@@ -1,6 +1,6 @@
-# IGPS — Intelligent Generation Prediction System
+# MLS-DL Multilayer Stacked Deep Learning with Temporal Context Self Attention 
 
-**SCI-03: PV Power-Generation Prediction** — a research pipeline and interactive
+**PV Power-Generation Prediction from the solar plants** — a research pipeline and interactive
 simulator for forecasting solar-plant power output from historical inverter
 and weather-station data.
 
