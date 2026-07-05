@@ -1,0 +1,6 @@
+TCSA improvement vs family reference (error metrics: % reduction; R2: +pp)
+Metric,Plant1-LSTM,Plant1-GRU,Plant1-Transformer,Plant2-LSTM,Plant2-GRU,Plant2-Transformer,Plant3-LSTM,Plant3-GRU,Plant3-Transformer
+MAE,20.174,8.574,2.177,28.608,17.004,8.154,20.267,10.840,1.955
+RMSE,15.955,7.320,0.465,20.152,12.500,12.572,15.505,9.298,1.124
+rRMSE,15.955,7.320,0.465,20.152,12.500,12.572,15.505,9.298,1.124
+R2,4.725,2.147,0.143,6.874,4.015,4.885,4.773,2.703,0.293
