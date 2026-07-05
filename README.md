@@ -10,6 +10,8 @@ self-attention), and **TCSA** (proposed) variant) that take 168 h (7-day)
 input windows and predict the next 24 h of PV generation, across three solar
 plants at Site-02 (Gyeongju-si, Gyeongsangbuk-do, South Korea).
 
+Hight light this https://xundullah.github.io/Demo--TCSA-SolarGen-Prediction/ this is for demo and simulation 
+
 ## Repository layout
 
 ```
