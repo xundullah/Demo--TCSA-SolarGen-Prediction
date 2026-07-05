@@ -82,6 +82,8 @@ metrics, percentage-point gain for R². Also exports
 `MetricSummary-PkW-AllPlants-TCSA-Improvement.csv`. Produced by
 `modelEvaluation.plot_metric_summary`.
 
+Hight light this https://xundullah.github.io/Demo--TCSA-SolarGen-Prediction/ this is for demo and simulation 
+
 ## Repository layout
 
 ```
