@@ -399,7 +399,7 @@ function buildBranch(p){
     <!-- circuit breaker (branch protection) -->
     <g data-tip="cb${p}" class="tip-target">
       <rect x="${cx-11}" y="459" width="22" height="22" rx="2" fill="#fff0f0" stroke="#c04040" stroke-width="2.3"/>
-      <line id="cbLine${p}" x1="${cx-7}" y1="470" x2="${cx+7}" y2="470" stroke="#c04040" stroke-width="2.4"/>
+      <line x1="${cx-7}" y1="470" x2="${cx+7}" y2="470" stroke="#c04040" stroke-width="2.4"/>
       <text x="${cx+18}" y="474" font-family="Barlow Condensed" font-size="10.5" font-weight="700" fill="#a03030">CB-${roman}</text>
     </g>
     <line id="lnE${p}" x1="${cx}" y1="481" x2="${cx}" y2="556" stroke="#2a8a50" stroke-width="3"/>
@@ -628,12 +628,7 @@ function updateSLD(){
     $('pwrPred'+p).textContent='TCSA '+fmt(pred,1);
     const gen=act>0.5;
     setFlow('lnA'+p, gen);                                   // PV string energized only while generating
-    ['lnB','lnC','lnD'].forEach(pre=>setFlow(pre+p, true));  // plant-side path always live (PV by day, BESS by night)
-    const cbClosed = (p===plant);                            // only the selected plant's breaker is closed
-    const cbl=$('cbLine'+p);
-    if(cbl) cbl.setAttribute('transform', cbClosed ? '' : `rotate(-35 ${CX[p]} 470)`);
-    if(tipMap['cb'+p]) tipMap['cb'+p].rows[1][1] = cbClosed ? 'Closed' : 'Open';
-    setFlow('lnE'+p, cbClosed);                              // no export through an open breaker
+    ['lnB','lnC','lnD','lnE'].forEach(pre=>setFlow(pre+p, true)); // export path always live (PV by day, BESS by night)
     setFlow('lnF'+p, true, !gen);                            // inverter<->BMS: charge (->BESS) by day, discharge (->grid) by night
     setFlow('lnG'+p, true, !gen);                            // BMS<->BESS
     const sun=$('sun'+p);
