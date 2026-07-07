@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SPFS — Solar-Plant Forecasting Simulator · Site-02</title>
+<title>IAD — Interactive Analytical Dashboard · TCSA Day-Ahead PV Forecasting</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -125,7 +125,7 @@ table.bench td .best{display:inline-block;margin-left:3px;color:#b45a10;font-siz
 </head>
 <body>
 <header>
-  <div class="ttl">SPFS · Solar-Plant Forecasting Simulator<span>Various MLS-DL based Day-Ahead PV Generation Forecasting · Gyeongju · South Korea</span></div>
+  <div class="ttl">IAD · Interactive Analytical Dashboard<span>TCSA-Based Day-Ahead Hourly PV Power Forecasting · Multi-Plant Validation · Gyeongju · South Korea</span></div>
   <div class="bdg b1">0.4 / 11 kV</div>
   <div class="bdg b2">3 × PV PLANT</div>
   <div class="bdg b3">24-h HORIZON</div>
@@ -282,7 +282,7 @@ table.bench td .best{display:inline-block;margin-left:3px;color:#b45a10;font-siz
 </script>
 <script>
 /* ============================================================
-   SPFS — Solar-Plant Forecasting Simulator  (logic)
+   IAD — Interactive Analytical Dashboard  (logic)
    Data: embedded PLANT_DATA + FULL_METRICS (also loadable from
    Sim/Site-02/SolarPlant{1,2,3}_Predictions.csv when served).
    ============================================================ */
@@ -364,7 +364,7 @@ function buildBranch(p){
         <rect x="${cx+7}" y="209.5" width="5" height="5" rx="1" fill="#4a8ac4"/>
         <animateTransform attributeName="transform" type="rotate" from="0 ${cx} 212" to="360 ${cx} 212" dur="5s" repeatCount="indefinite"/>
       </g>
-      <text x="${cx}" y="188" text-anchor="middle" font-family="Barlow Condensed" font-size="10" fill="#2a6aaa">PV Controller</text>
+      <text x="${cx+26}" y="216" font-family="Barlow Condensed" font-size="11.5" font-weight="700" fill="#2a6aaa">PV Controller</text>
     </g>
     <line id="lnB${p}" x1="${cx}" y1="233" x2="${cx}" y2="284" stroke="#e0a020" stroke-width="3"/>
     <!-- individual LV bus 0.4kV -->
@@ -384,9 +384,8 @@ function buildBranch(p){
     <!-- circuit breaker (branch protection) -->
     <g data-tip="cb${p}" class="tip-target">
       <rect x="${cx-11}" y="459" width="22" height="22" rx="2" fill="#fff0f0" stroke="#c04040" stroke-width="2.3"/>
-      <line x1="${cx-6}" y1="465" x2="${cx+6}" y2="475" stroke="#c04040" stroke-width="2"/>
-      <line x1="${cx+6}" y1="465" x2="${cx-6}" y2="475" stroke="#c04040" stroke-width="2"/>
-      <text x="${cx+18}" y="474" font-family="Barlow Condensed" font-size="10.5" font-weight="700" fill="#a03030">CB-${busId}</text>
+      <line x1="${cx-7}" y1="470" x2="${cx+7}" y2="470" stroke="#c04040" stroke-width="2.4"/>
+      <text x="${cx+18}" y="474" font-family="Barlow Condensed" font-size="10.5" font-weight="700" fill="#a03030">CB-${roman}</text>
     </g>
     <line id="lnE${p}" x1="${cx}" y1="481" x2="${cx}" y2="556" stroke="#2a8a50" stroke-width="3"/>
   </g>`;
@@ -415,9 +414,9 @@ const tipMap = {
   tr1:{title:'Step-up TR I',rows:[['Ratio','0.4 / 11 kV']]},
   tr2:{title:'Step-up TR II',rows:[['Ratio','0.4 / 11 kV']]},
   tr3:{title:'Step-up TR III',rows:[['Ratio','0.4 / 11 kV']]},
-  cb1:{title:'Circuit Breaker CB-A',rows:[['Function','Branch protection'],['Status','Closed']]},
-  cb2:{title:'Circuit Breaker CB-B',rows:[['Function','Branch protection'],['Status','Closed']]},
-  cb3:{title:'Circuit Breaker CB-C',rows:[['Function','Branch protection'],['Status','Closed']]},
+  cb1:{title:'Circuit Breaker CB-I',rows:[['Function','Branch protection'],['Status','Closed']]},
+  cb2:{title:'Circuit Breaker CB-II',rows:[['Function','Branch protection'],['Status','Closed']]},
+  cb3:{title:'Circuit Breaker CB-III',rows:[['Function','Branch protection'],['Status','Closed']]},
 };
 const tip=$('tip');
 function showTip(id,e){const d=tipMap[id];if(!d)return;let h=`<div class="th">${d.title}</div>`;d.rows.forEach(r=>h+=`<div class="row"><span class="lbl">${r[0]}</span><span class="val">${r[1]}</span></div>`);tip.innerHTML=h;tip.style.display='block';moveTip(e);}
