@@ -243,6 +243,10 @@ table.bench td .best{display:inline-block;margin-left:3px;color:#b45a10;font-siz
       </div>
       <svg id="chartMain" viewBox="0 0 640 190" preserveAspectRatio="none"></svg>
     </div>
+    <div class="chart">
+      <div class="lbl"><span>ABSOLUTE ERROR |pred − actual| — kW</span><span id="errSub"></span></div>
+      <svg id="chartErr" viewBox="0 0 640 150" preserveAspectRatio="none"></svg>
+    </div>
     </div>
   </div>
 
@@ -474,7 +478,13 @@ function seriesMax(){
   keys.forEach(k=>{for(const v of D[k]) if(v>m)m=v;});
   return Math.max(m,1);
 }
-let YMAX=1;
+function errMax(){
+  const f=fam(); let m=0;
+  const keys=[f.mhsa,f.tcsa]; if(f.base)keys.push(f.base);
+  keys.forEach(k=>{for(let i=0;i<N;i++){const e=Math.abs(D[k][i]-D.Actual[i]); if(e>m)m=e;}});
+  return Math.max(m,1);
+}
+let YMAX=1, EMAX=1;
 
 function linePath(key, upto, W, H, ymax, top, bot){
   const plotH=H-top-bot;
@@ -525,6 +535,23 @@ function drawMain(){
   $('chartMain').innerHTML=s;
 }
 
+function drawErr(){
+  const W=640,H=150,top=8,bot=16;
+  const f=fam();
+  let s=dayTicks(W,H);
+  function ePath(key,upto){
+    let p=''; const plotH=H-top-bot;
+    for(let i=0;i<=upto;i++){const x=(i/(N-1))*W;const e=Math.abs(D[key][i]-D.Actual[i]);const y=H-bot-(e/EMAX)*plotH;p+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);}
+    return p;
+  }
+  if(f.base) s+=`<path d="${ePath(f.base,idx)}" fill="none" stroke="${COL.base}" stroke-width="1.2" opacity=".9"/>`;
+  s+=`<path d="${ePath(f.mhsa,idx)}" fill="none" stroke="${COL.mhsa}" stroke-width="1.2" stroke-dasharray="4 2" opacity=".9"/>`;
+  s+=`<path d="${ePath(f.tcsa,idx)}" fill="none" stroke="${COL.tcsa}" stroke-width="1.9"/>`;
+  const cx=(idx/(N-1))*W;
+  s+=`<line x1="${cx.toFixed(1)}" y1="0" x2="${cx.toFixed(1)}" y2="${H}" stroke="#c03020" stroke-width="1.3"/>`;
+  s+=`<text x="3" y="11" font-family="Barlow Condensed" font-size="8.5" fill="#7a92aa">${EMAX.toFixed(1)} kW</text>`;
+  $('chartErr').innerHTML=s;
+}
 
 /* ============================================================
    Metrics
@@ -636,8 +663,9 @@ function render(){
   $('tsDay').textContent=Math.floor(idx/24)+1;
   $('tsRange').value=idx;
   $('sliderLbl').textContent=idx+1;
+  $('errSub').textContent='|TCSA−actual| = '+fmt(Math.abs(tcsa-actual),2)+' kW';
 
-  drawMain(); renderLive(); updateSLD();
+  drawMain(); drawErr(); renderLive(); updateSLD();
 
   // event log: sunrise / sunset for selected plant, daily peak, TCSA tracking
   const gen = actual>0.5 ? 1 : 0;
@@ -697,7 +725,7 @@ function selectDataset(resetLog){
   D = PLANT_DATA[plant];
   N = D.ts.length;
   idx = 0; prevGen={1:0,2:0,3:0};
-  YMAX=seriesMax();
+  YMAX=seriesMax(); EMAX=errMax();
   computePeaks();
   $('tsRange').max=N-1; $('tsMax').textContent=N;
   sysSts.classList.remove('play'); sysSts.textContent='READY';
