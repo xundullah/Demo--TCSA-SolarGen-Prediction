@@ -49,8 +49,8 @@ footer{height:30px;background:#152b47;display:flex;align-items:center;gap:14px;p
 .row2 .evt-wrap{flex:1;min-height:80px;}
 .cs-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 .cs-box{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f0f6fc;border:1.5px solid #7aa8d4;border-radius:6px;padding:5px 9px;}
-.cs-title{font-size:10.5px;font-weight:700;letter-spacing:1px;color:#1a4a8a;}
-.cs-sel{font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 6px;border:1.5px solid #7aa8d4;border-radius:4px;background:#fff;color:#1a4a8a;cursor:pointer;min-width:74px;}
+.cs-title{font-size:11.5px;font-weight:700;letter-spacing:1px;color:#1a4a8a;}
+.cs-sel{font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.5px;padding:3px 6px;border:1.5px solid #7aa8d4;border-radius:4px;background:#fff;color:#1a4a8a;cursor:pointer;min-width:74px;}
 .cs-sel:focus{outline:none;border-color:#1a4a8a;box-shadow:0 0 0 2px rgba(26,74,138,.2);}
 .cfg-box{font-size:10.5px;letter-spacing:.3px;color:#1a4a8a;background:#fff6e2;border:1px solid #e8ce8a;border-radius:5px;padding:5px 9px;margin-top:5px;line-height:1.5;}
 .cfg-box b{color:#0d2e52;}
@@ -271,8 +271,9 @@ table.bench td .best{display:inline-block;margin-left:3px;color:#b45a10;font-siz
 <div id="tip"></div>
 <footer>
   <div class="lg"><div class="ld" style="background:#e0a020"></div><span style="color:#ffd24a">PV Plants I·II·III</span></div>
-  <div class="lg"><div class="ld" style="background:#4a9ad4"></div><span>PV Controller</span></div>
+  <div class="lg"><div class="ld" style="background:#4a9ad4"></div><span>PV Inverter (MPPT · DC/AC)</span></div>
   <div class="lg"><div class="ld" style="background:#c04040"></div><span style="color:#ff9a9a">Circuit Breaker</span></div>
+  <div class="lg"><div class="ld" style="background:#8a5ab8"></div><span style="color:#c8a8e8">BESS · BMS</span></div>
   <div class="lg"><div class="ld" style="background:#2a8a50"></div><span style="color:#40d090">11 kV Distribution Busbar</span></div>
   <span style="margin-left:auto;color:#6a9ab8;font-size:9px;">DATA: Sim/Site-02/ · HOVER SLD FOR DETAILS · PLAY TO STEP THROUGH HOURS</span>
 </footer>
@@ -351,22 +352,32 @@ function buildBranch(p){
       <text x="46" y="13" text-anchor="middle" font-family="Barlow Condensed" font-size="11" font-weight="700" fill="#7ad4ff" id="pwrAct${p}">0.0 kW</text>
       <text x="46" y="25" text-anchor="middle" font-family="Barlow Condensed" font-size="9"  fill="#ffae60" id="pwrPred${p}">TCSA 0.0</text>
     </g>
-    <line id="lnA${p}" x1="${cx}" y1="126" x2="${cx}" y2="191" stroke="#e0a020" stroke-width="3"/>
+    <line id="lnA${p}" x1="${cx}" y1="126" x2="${cx}" y2="192" stroke="#e0a020" stroke-width="3"/>
     <!-- MPPT controller -->
     <g data-tip="ctrl${p}" class="tip-target">
-      <circle cx="${cx}" cy="212" r="21" fill="#eef6ff" stroke="#4a9ad4" stroke-width="2"/>
-      <g>
-        <circle cx="${cx}" cy="212" r="9" fill="none" stroke="#4a8ac4" stroke-width="2.4"/>
-        <circle cx="${cx}" cy="212" r="3.5" fill="#4a8ac4"/>
-        <rect x="${cx-2.5}" y="200" width="5" height="5" rx="1" fill="#4a8ac4"/>
-        <rect x="${cx-2.5}" y="220" width="5" height="5" rx="1" fill="#4a8ac4"/>
-        <rect x="${cx-12}" y="209.5" width="5" height="5" rx="1" fill="#4a8ac4"/>
-        <rect x="${cx+7}" y="209.5" width="5" height="5" rx="1" fill="#4a8ac4"/>
-        <animateTransform attributeName="transform" type="rotate" from="0 ${cx} 212" to="360 ${cx} 212" dur="5s" repeatCount="indefinite"/>
-      </g>
-      <text x="${cx+26}" y="216" font-family="Barlow Condensed" font-size="11.5" font-weight="700" fill="#2a6aaa">PV Controller</text>
+      <rect x="${cx-20}" y="192" width="40" height="40" rx="4" fill="#eef6ff" stroke="#4a9ad4" stroke-width="2.3"/>
+      <rect x="${cx-20}" y="192" width="40" height="40" rx="4" fill="none" stroke="#7ad4ff" stroke-width="1.3" class="abus" opacity=".7"/>
+      <line x1="${cx-20}" y1="232" x2="${cx+20}" y2="192" stroke="#4a9ad4" stroke-width="1.6"/>
+      <line x1="${cx-14}" y1="201" x2="${cx-4}" y2="201" stroke="#2a6aaa" stroke-width="2"/>
+      <line x1="${cx-14}" y1="205.5" x2="${cx-4}" y2="205.5" stroke="#2a6aaa" stroke-width="2" stroke-dasharray="2.5 2"/>
+      <path d="M ${cx+2} 223 q 4.5 -7 9 0 q 4.5 7 9 0" fill="none" stroke="#2a6aaa" stroke-width="2"/>
+      <text x="${cx+26}" y="208" font-family="Barlow Condensed" font-size="11.5" font-weight="700" fill="#2a6aaa">PV Inverter</text>
+      <text x="${cx+26}" y="220" font-family="Barlow Condensed" font-size="9.5" fill="#4a8ab8">MPPT · DC/AC</text>
     </g>
-    <line id="lnB${p}" x1="${cx}" y1="233" x2="${cx}" y2="284" stroke="#e0a020" stroke-width="3"/>
+    <!-- BESS via BMS (standard plant equipment) -->
+    <g data-tip="bess${p}" class="tip-target">
+      <line id="lnF${p}" x1="${cx-20}" y1="212" x2="${cx-56}" y2="212" stroke="#a078c8" stroke-width="2.2" stroke-dasharray="5 3"/>
+      <rect x="${cx-88}" y="203" width="32" height="18" rx="3" fill="#f6f0fc" stroke="#8a5ab8" stroke-width="2"/>
+      <text x="${cx-72}" y="215.5" text-anchor="middle" font-family="Barlow Condensed" font-size="9.5" font-weight="700" fill="#6a3a98">BMS</text>
+      <line id="lnG${p}" x1="${cx-88}" y1="212" x2="${cx-104}" y2="212" stroke="#a078c8" stroke-width="2.2" stroke-dasharray="5 3"/>
+      <rect x="${cx-142}" y="200" width="38" height="24" rx="3" fill="#f6f0fc" stroke="#8a5ab8" stroke-width="2"/>
+      <line x1="${cx-134}" y1="205" x2="${cx-134}" y2="219" stroke="#8a5ab8" stroke-width="2"/>
+      <line x1="${cx-127}" y1="209" x2="${cx-127}" y2="215" stroke="#8a5ab8" stroke-width="2"/>
+      <line x1="${cx-118}" y1="205" x2="${cx-118}" y2="219" stroke="#8a5ab8" stroke-width="2"/>
+      <line x1="${cx-111}" y1="209" x2="${cx-111}" y2="215" stroke="#8a5ab8" stroke-width="2"/>
+      <text x="${cx-123}" y="237" text-anchor="middle" font-family="Barlow Condensed" font-size="10.5" font-weight="700" fill="#6a3a98">BESS ${roman}</text>
+    </g>
+    <line id="lnB${p}" x1="${cx}" y1="232" x2="${cx}" y2="284" stroke="#e0a020" stroke-width="3"/>
     <!-- individual LV bus 0.4kV -->
     <g data-tip="bus${p}" class="tip-target">
       <rect x="${cx-100}" y="284" width="200" height="28" rx="10" fill="#d4eeff" stroke="#4a9ad4" stroke-width="2.3"/>
@@ -405,9 +416,9 @@ const tipMap = {
   plant1:{title:'Solar Plant I',rows:[['Bus','BUS-A 0.4 kV'],['Forecast','24-h day-ahead']]},
   plant2:{title:'Solar Plant II',rows:[['Bus','BUS-B 0.4 kV'],['Forecast','24-h day-ahead']]},
   plant3:{title:'Solar Plant III',rows:[['Bus','BUS-C 0.4 kV'],['Forecast','24-h day-ahead']]},
-  ctrl1:{title:'PV Controller I',rows:[['Function','MPPT · power conditioning']]},
-  ctrl2:{title:'PV Controller II',rows:[['Function','MPPT · power conditioning']]},
-  ctrl3:{title:'PV Controller III',rows:[['Function','MPPT · power conditioning']]},
+  ctrl1:{title:'PV Inverter I',rows:[['Function','MPPT · DC/AC conversion']]},
+  ctrl2:{title:'PV Inverter II',rows:[['Function','MPPT · DC/AC conversion']]},
+  ctrl3:{title:'PV Inverter III',rows:[['Function','MPPT · DC/AC conversion']]},
   bus1:{title:'BUS-A · 0.4 kV',rows:[['Plant','I'],['Type','LV collection']]},
   bus2:{title:'BUS-B · 0.4 kV',rows:[['Plant','II'],['Type','LV collection']]},
   bus3:{title:'BUS-C · 0.4 kV',rows:[['Plant','III'],['Type','LV collection']]},
@@ -417,6 +428,9 @@ const tipMap = {
   cb1:{title:'Circuit Breaker CB-I',rows:[['Function','Branch protection'],['Status','Closed']]},
   cb2:{title:'Circuit Breaker CB-II',rows:[['Function','Branch protection'],['Status','Closed']]},
   cb3:{title:'Circuit Breaker CB-III',rows:[['Function','Branch protection'],['Status','Closed']]},
+  bess1:{title:'BESS via BMS — Plant I',rows:[['Role','Energy buffering'],['Coupling','DC side via BMS']]},
+  bess2:{title:'BESS via BMS — Plant II',rows:[['Role','Energy buffering'],['Coupling','DC side via BMS']]},
+  bess3:{title:'BESS via BMS — Plant III',rows:[['Role','Energy buffering'],['Coupling','DC side via BMS']]},
 };
 const tip=$('tip');
 function showTip(id,e){const d=tipMap[id];if(!d)return;let h=`<div class="th">${d.title}</div>`;d.rows.forEach(r=>h+=`<div class="row"><span class="lbl">${r[0]}</span><span class="val">${r[1]}</span></div>`);tip.innerHTML=h;tip.style.display='block';moveTip(e);}
@@ -609,7 +623,7 @@ function updateSLD(){
     $('pwrAct'+p).textContent=fmt(act,1)+' kW';
     $('pwrPred'+p).textContent='TCSA '+fmt(pred,1);
     const gen=act>0.5;
-    ['lnA','lnB','lnC','lnD','lnE'].forEach(pre=>setFlow(pre+p, gen));
+    ['lnA','lnB','lnC','lnD','lnE','lnF','lnG'].forEach(pre=>setFlow(pre+p, gen));
     const sun=$('sun'+p);
     if(sun){ sun.style.opacity=gen?'1':'.25'; sun.style.fill=gen?'#f5c030':'#9aa4ac'; }
   });
