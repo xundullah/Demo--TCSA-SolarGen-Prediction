@@ -36,6 +36,8 @@ footer{height:30px;background:#152b47;display:flex;align-items:center;gap:14px;p
 .abus{stroke-dasharray:14 6;animation:busf 1.4s linear infinite;}
 @keyframes flowdash{to{stroke-dashoffset:-20;}}
 .flow-active{stroke-dasharray:6 3 !important;animation:flowdash 1s linear infinite;}
+@keyframes flowdashrev{to{stroke-dashoffset:20;}}
+.flow-rev{stroke-dasharray:6 3 !important;animation:flowdashrev 1s linear infinite;}
 .dim{opacity:.28;transition:opacity .4s;}
 .sel-plant{filter:drop-shadow(0 0 6px #ffb84a);}
 .deselected{opacity:.4;filter:grayscale(.5);transition:opacity .4s,filter .4s;}
@@ -319,12 +321,12 @@ let peaks = [];          // daily peak indices
 function pvPanel(x, y){
   // small tilted PV array glyph, top-left at x,y
   let s = `<g>`;
-  for(let r=0;r<2;r++) for(let c=0;c<3;c++){
-    const px=x+c*17, py=y+r*13;
-    s+=`<rect x="${px}" y="${py}" width="15" height="11" rx="1.5" fill="#173a6a" stroke="#4a9ad4" stroke-width="1"/>`+
-       `<line x1="${px+5}" y1="${py}" x2="${px+5}" y2="${py+11}" stroke="#4a9ad4" stroke-width=".6"/>`+
-       `<line x1="${px+10}" y1="${py}" x2="${px+10}" y2="${py+11}" stroke="#4a9ad4" stroke-width=".6"/>`+
-       `<line x1="${px}" y1="${py+5.5}" x2="${px+15}" y2="${py+5.5}" stroke="#4a9ad4" stroke-width=".6"/>`;
+  for(let r=0;r<3;r++) for(let c=0;c<4;c++){
+    const px=x+c*19, py=y+r*14;
+    s+=`<rect x="${px}" y="${py}" width="17" height="12" rx="1.5" fill="#173a6a" stroke="#4a9ad4" stroke-width="1"/>`+
+       `<line x1="${px+5.7}" y1="${py}" x2="${px+5.7}" y2="${py+12}" stroke="#4a9ad4" stroke-width=".6"/>`+
+       `<line x1="${px+11.3}" y1="${py}" x2="${px+11.3}" y2="${py+12}" stroke="#4a9ad4" stroke-width=".6"/>`+
+       `<line x1="${px}" y1="${py+6}" x2="${px+17}" y2="${py+6}" stroke="#4a9ad4" stroke-width=".6"/>`;
   }
   s+=`</g>`;
   return s;
@@ -343,16 +345,18 @@ function buildBranch(p){
     </g>
     <!-- PV panels + sun -->
     <g data-tip="plant${p}" class="tip-target">
-      ${pvPanel(cx-25, 58)}
-      <circle cx="${cx+42}" cy="64" r="9" fill="#f5c030" id="sun${p}"/>
+      ${pvPanel(cx-37, 50)}
+      <circle cx="${cx+52}" cy="56" r="9" fill="#f5c030" id="sun${p}"/>
     </g>
-    <!-- power readout -->
-    <g transform="translate(${cx-46},96)">
-      <rect x="0" y="0" width="92" height="30" rx="4" fill="#0d1e30" opacity=".92"/>
-      <text x="46" y="13" text-anchor="middle" font-family="Barlow Condensed" font-size="11" font-weight="700" fill="#7ad4ff" id="pwrAct${p}">0.0 kW</text>
-      <text x="46" y="25" text-anchor="middle" font-family="Barlow Condensed" font-size="9"  fill="#ffae60" id="pwrPred${p}">TCSA 0.0</text>
+    <!-- power meter (side-mounted, tapped onto the feeder) -->
+    <line x1="${cx}" y1="111" x2="${cx+22}" y2="111" stroke="#7ad4ff" stroke-width="1.5"/>
+    <circle cx="${cx}" cy="111" r="2.8" fill="#7ad4ff"/>
+    <g transform="translate(${cx+22},96)">
+      <rect x="0" y="0" width="92" height="30" rx="4" fill="#f0f6fc" stroke="#7aa8d4" stroke-width="1.5"/>
+      <text x="46" y="13" text-anchor="middle" font-family="Barlow Condensed" font-size="11" font-weight="700" fill="#1a4a8a" id="pwrAct${p}">0.0 kW</text>
+      <text x="46" y="25" text-anchor="middle" font-family="Barlow Condensed" font-size="9"  font-weight="700" fill="#c06818" id="pwrPred${p}">TCSA 0.0</text>
     </g>
-    <line id="lnA${p}" x1="${cx}" y1="126" x2="${cx}" y2="192" stroke="#e0a020" stroke-width="3"/>
+    <line id="lnA${p}" x1="${cx}" y1="90" x2="${cx}" y2="192" stroke="#e0a020" stroke-width="3"/>
     <!-- MPPT controller -->
     <g data-tip="ctrl${p}" class="tip-target">
       <rect x="${cx-20}" y="192" width="40" height="40" rx="4" fill="#eef6ff" stroke="#4a9ad4" stroke-width="2.3"/>
@@ -607,10 +611,10 @@ function renderBench(){
 /* ============================================================
    SLD live update
    ============================================================ */
-function setFlow(id, active){
+function setFlow(id, active, rev=false){
   const el=$(id); if(!el)return;
-  el.classList.remove('flow-active','dim');
-  el.classList.add(active?'flow-active':'dim');
+  el.classList.remove('flow-active','flow-rev','dim');
+  el.classList.add(active?(rev?'flow-rev':'flow-active'):'dim');
 }
 function updateSLD(){
   const f=fam();
@@ -623,7 +627,10 @@ function updateSLD(){
     $('pwrAct'+p).textContent=fmt(act,1)+' kW';
     $('pwrPred'+p).textContent='TCSA '+fmt(pred,1);
     const gen=act>0.5;
-    ['lnA','lnB','lnC','lnD','lnE','lnF','lnG'].forEach(pre=>setFlow(pre+p, gen));
+    setFlow('lnA'+p, gen);                                   // PV string energized only while generating
+    ['lnB','lnC','lnD','lnE'].forEach(pre=>setFlow(pre+p, true)); // export path always live (PV by day, BESS by night)
+    setFlow('lnF'+p, true, !gen);                            // inverter<->BMS: charge (->BESS) by day, discharge (->grid) by night
+    setFlow('lnG'+p, true, !gen);                            // BMS<->BESS
     const sun=$('sun'+p);
     if(sun){ sun.style.opacity=gen?'1':'.25'; sun.style.fill=gen?'#f5c030':'#9aa4ac'; }
   });
