@@ -561,9 +561,14 @@ def plot_diurnal_patterns(
             os.makedirs(save_dir, exist_ok=True)
             base = os.path.join(save_dir, save_name)
             fig.savefig(f"{base}.pdf")
-            fig.savefig(f"{base}.png", dpi=600)
+            fig.savefig(f"{base}.png", dpi=300)
+
+            figName = os.path.join(save_dir, "2. Data Analytics.png")
+            fig.savefig(f"{figName}", dpi=150)
+
             print(f"Saved: {base}.pdf")
             print(f"Saved: {base}.png")
+            print(f"Saved: {figName}")
 
         # Optional warning about history files that were not found upstream.
         if missing:
