@@ -118,8 +118,8 @@ index.html                          SPFS - Solar-Plant Forecasting Simulator (se
 ## Data pipeline
 
 1. **Pre-processed input** — `Export/Data/Site#02_Data.gzip` holds hourly PV
-   inverter output (plants `71780001`, `71780003`, `71780004`) and
-   weather-station readings (station `717804001`) for Site-02
+   inverter output (plants `...G0001`, `...G0003`, `...G0004`) and
+   weather-station readings (station `...G4001`) for Site-02
    (Gyeongju-si, Gyeongsangbuk-do).
 2. **Data preparation** (`Code/Site02_DataPreparation.ipynb`) — cleans
    outliers/gaps using `Library/dataProcessing.py` (harmonic-climatology
