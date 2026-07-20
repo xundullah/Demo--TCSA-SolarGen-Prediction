@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IAD — Interactive Analytical Dashboard · TCSA Day-Ahead PV Forecasting</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#eef4fb;font-family:'Barlow Condensed',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;}
+header{height:52px;background:#152b47;display:flex;align-items:center;gap:12px;padding:0 20px;flex-shrink:0;}
+.ttl{font-size:13px;letter-spacing:1px;color:#ffd24a;font-weight:700;line-height:1.3;}
+.ttl span{display:block;font-size:9px;color:#9db8d4;letter-spacing:.5px;font-weight:400;margin-top:1px;}
+.bdg{font-size:10px;padding:2px 10px;border-radius:2px;}
+.b1{background:#0a1828;color:#7ad4ff;border:1px solid #7ad4ff;}
+.b2{background:#2a1e04;color:#ffb84a;border:1px solid #ffb84a;}
+.b3{background:#0a2010;color:#40d090;border:1px solid #40d090;}
+.sts{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:#40d090;}
+.sts::before{content:'';width:8px;height:8px;border-radius:50%;background:#40d090;animation:bk 2s infinite;}
+.sts.play{color:#ffd24a;}
+.sts.play::before{background:#ffd24a;}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
+#main{flex:1;display:flex;overflow:hidden;}
+#left{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:10px;min-width:0;}
+#resizer{width:6px;background:#aac2da;cursor:ew-resize;flex-shrink:0;position:relative;transition:background .15s;}
+#resizer:hover,#resizer.active{background:#4a9ad4;}
+#resizer::before{content:'⋮⋮';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#4a6a8a;font-size:14px;letter-spacing:-2px;pointer-events:none;font-weight:700;}
+#resizer:hover::before,#resizer.active::before{color:#fff;}
+#right{width:660px;min-width:500px;max-width:920px;flex-shrink:0;background:#dae7f4;border-left:1px solid #aac2da;display:flex;flex-direction:column;overflow-y:auto;}
+body.resizing{cursor:ew-resize;user-select:none;}
+footer{height:30px;background:#152b47;display:flex;align-items:center;gap:14px;padding:0 16px;font-size:10px;color:#7ad4ff;flex-shrink:0;}
+.lg{display:flex;align-items:center;gap:5px;}
+.ld{width:16px;height:4px;border-radius:1px;}
+.ldd{width:16px;height:0;border-top:2px dashed;}
+@keyframes busf{0%{stroke-dashoffset:40}100%{stroke-dashoffset:0}}
+.abus{stroke-dasharray:14 6;animation:busf 1.4s linear infinite;}
+@keyframes flowdash{to{stroke-dashoffset:-20;}}
+.flow-active{stroke-dasharray:6 3 !important;animation:flowdash 1s linear infinite;}
+@keyframes flowdashrev{to{stroke-dashoffset:20;}}
+.flow-rev{stroke-dasharray:6 3 !important;animation:flowdashrev 1s linear infinite;}
+.dim{opacity:.28;transition:opacity .4s;}
+.sel-plant{filter:drop-shadow(0 0 6px #ffb84a);}
+.deselected{opacity:.4;filter:grayscale(.5);transition:opacity .4s,filter .4s;}
+.panel{background:#fff;border:1px solid #b4ccdf;border-radius:6px;padding:6px 9px;margin:4px 5px;flex-shrink:0;}
+.panel h3{font-size:11px;color:#1a4a8a;font-weight:700;letter-spacing:1px;margin-bottom:3px;border-bottom:1px solid #d3e2ee;padding-bottom:2px;}
+.panel h3 .sub{font-weight:400;color:#5a7a92;font-size:9.5px;letter-spacing:.4px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:stretch;}
+.row2>.panel{display:flex;flex-direction:column;}
+.row2>.panel:first-child{margin-right:3px;}
+.row2>.panel:last-child{margin-left:3px;}
+.row2 .evt-wrap{flex:1;min-height:70px;}
+.cs-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.cs-box{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f0f6fc;border:1.5px solid #7aa8d4;border-radius:6px;padding:5px 9px;}
+.cs-title{font-size:11.5px;font-weight:700;letter-spacing:1px;color:#1a4a8a;}
+.cs-sel{font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.5px;padding:3px 6px;border:1.5px solid #7aa8d4;border-radius:4px;background:#fff;color:#1a4a8a;cursor:pointer;min-width:74px;}
+.cs-sel:focus{outline:none;border-color:#1a4a8a;box-shadow:0 0 0 2px rgba(26,74,138,.2);}
+.cfg-box{font-size:10.5px;letter-spacing:.3px;color:#1a4a8a;background:#fff6e2;border:1px solid #e8ce8a;border-radius:5px;padding:5px 9px;margin-top:5px;line-height:1.5;}
+.cfg-box b{color:#0d2e52;}
+.load-err{display:none;background:#fce4dc;border:1px solid #d0603c;border-radius:5px;padding:6px 9px;margin-top:5px;font-size:10.5px;color:#7a2010;line-height:1.5;}
+.load-err b{color:#5a1000;}
+.load-err code{background:#fff;border:1px solid #d0a090;padding:1px 4px;border-radius:2px;font-family:'Barlow Condensed',monospace;}
+.load-err input[type=file]{margin-top:5px;width:100%;font-size:10px;}
+.tsbox{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0d1e30;color:#7ad4ff;padding:5px 11px;border-radius:6px;margin-top:5px;border:1.5px solid #2a5a8a;}
+.tsbox .tslbl{font-size:13px;font-weight:700;letter-spacing:2px;color:#ffd24a;}
+.tsbox .tsval{text-align:right;line-height:1.15;}
+.tsbox .tsval #tsMain{font-size:13px;font-weight:700;letter-spacing:1px;color:#c8e8ff;}
+.tsbox .sub{font-size:9px;color:#8ab4d4;margin-top:2px;letter-spacing:.5px;}
+.ctr{display:flex;gap:5px;align-items:center;margin-top:5px;}
+.ctr button{flex:1;padding:5px 0;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1px;background:#1a4a8a;color:#fff;border:none;border-radius:4px;cursor:pointer;transition:background .2s;}
+.ctr button:hover{background:#2a6aaa;}
+.ctr button.sec{background:#7a9ab0;}
+.ctr button.sec:hover{background:#8aaabf;}
+.ctr button.gold{background:#c98a10;}
+.ctr button.gold:hover{background:#e0a020;}
+.slider-row{display:flex;align-items:center;gap:6px;font-size:10px;color:#5a7a92;margin-top:5px;}
+.slider-row>span:first-child{min-width:42px;font-weight:700;color:#1a4a8a;font-family:'Barlow Condensed',monospace;text-align:right;}
+.slider-row input[type=range]{flex:1;min-width:40px;accent-color:#1a4a8a;}
+.slider-row select{font-family:inherit;font-size:10px;padding:2px 4px;border:1px solid #a0b8cc;border-radius:3px;background:#fff;}
+.spd-inline{font-weight:600;color:#2a5a7a;letter-spacing:1px;}
+.evt-wrap{position:relative;height:105px;flex:1;}
+.evt{position:absolute;inset:0;overflow-y:auto;font-size:10px;color:#2a5a7a;line-height:1.4;background:#f5f9fc;border:1px solid #d3e2ee;border-radius:4px;padding:5px 6px;}
+.evt .e{padding:2px 0;border-bottom:1px dashed #e2eaf1;}
+.evt .e:last-child{border-bottom:none;}
+.evt .e .ts{color:#7a92aa;font-size:9px;}
+.evt .e.warn{color:#a05010;font-weight:700;}
+.evt .e.good{color:#207a40;font-weight:700;}
+.evt .e.info{color:#1a5a9a;}
+.mtr{display:grid;gap:4px;margin-top:5px;}
+.mtr .cell{border:1px solid #c8dcec;border-radius:4px;padding:2px 7px;background:#f0f6fc;}
+.mtr .lbl{font-size:9px;color:#5a7a92;letter-spacing:1px;font-weight:600;}
+.mtr .val{font-size:13px;color:#1a4a8a;font-weight:700;font-family:'Barlow Condensed',monospace;}
+.mtr .val .u{font-size:9px;color:#6a8aaa;font-weight:400;margin-left:2px;}
+.mtr .cell.actual{background:#e2eefc;border-color:#7aa8d4;}
+.mtr .cell.base{background:#e2f3e8;border-color:#7cc79a;}
+.mtr .cell.mhsa{background:#fdf2df;border-color:#e8c878;}
+.mtr .cell.tcsa{background:#fce6d6;border-color:#e69a58;}
+.mtr .cell.tcsa .val{color:#b45a10;}
+table.bench{width:100%;border-collapse:collapse;margin-top:5px;font-size:11px;}
+table.bench th,table.bench td{padding:3px 6px;text-align:center;border-bottom:1px solid #e2eaf1;}
+table.bench th{font-size:9.5px;letter-spacing:.4px;color:#5a7a92;font-weight:600;background:#f2f7fc;}
+table.bench td.model{text-align:left;font-weight:700;font-size:11px;}
+table.bench td.num{font-family:'Barlow Condensed',monospace;color:#2a4a6a;}
+table.bench tr.r-base td.model{color:#207a40;}
+table.bench tr.r-mhsa td.model{color:#b58a10;}
+table.bench tr.r-tcsa{background:#fcefe2;}
+table.bench tr.r-tcsa td.model{color:#b45a10;}
+table.bench tr.r-tcsa td.num{font-weight:700;color:#a24e08;}
+table.bench td .best{display:inline-block;margin-left:3px;color:#b45a10;font-size:9px;font-weight:700;}
+.pi-note{font-size:9.5px;color:#5a7a92;margin-top:4px;line-height:1.45;font-style:italic;}
+.chart{margin-top:5px;background:#fbfdff;border:1px solid #d3e2ee;border-radius:4px;padding:4px 7px;display:flex;flex-direction:column;min-height:0;}
+.chart .lbl{font-size:9.5px;color:#5a7a92;letter-spacing:.6px;font-weight:600;margin-bottom:2px;display:flex;justify-content:space-between;flex-shrink:0;}
+.chart svg{width:100%;flex:1;min-height:0;display:block;}
+#chartMain{height:150px;}
+.panel.charts{flex:0 0 auto;display:flex;flex-direction:column;}
+.ts-body{flex:1;display:flex;flex-direction:column;min-height:0;}
+.ts-body .chart{flex:1;}
+.ts-body .chart.tall{flex:1.6;}
+#tip{position:fixed;display:none;z-index:999;background:#0d1e30;border:1px solid #4a9ad4;border-radius:6px;padding:9px 13px;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:#c8e8ff;pointer-events:none;min-width:200px;line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+#tip .th{color:#ffd24a;font-size:13px;font-weight:700;border-bottom:1px solid #2a5a8a;padding-bottom:4px;margin-bottom:5px;}
+#tip .row{display:flex;gap:6px;}#tip .lbl{color:#80a8c8;min-width:78px;}#tip .val{color:#e8f4ff;font-weight:600;}
+.tip-target{cursor:pointer;}
+.tip-target:hover rect,.tip-target:hover circle{filter:brightness(1.12);}
+#canvaswrap{flex:1;position:relative;display:flex;justify-content:center;align-items:center;overflow:hidden;padding:4px;min-height:0;}
+#sld{width:100%;height:100%;}
+.legend-chip{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-weight:500;color:#5a7a92;}
+.legend-chip i{width:14px;height:3px;border-radius:1px;display:inline-block;}
+</style>
+</head>
+<body>
+<header>
+  <div class="ttl">IAD · Interactive Analytical Dashboard<span>TCSA-Based Day-Ahead Hourly PV Power Forecasting · Multi-Plant Validation · Gyeongju · South Korea</span></div>
+  <div class="bdg b1">0.4 / 11 kV</div>
+  <div class="bdg b2">3 × PV PLANT</div>
+  <div class="bdg b3">24-h HORIZON</div>
+  <div class="sts" id="sysSts">READY</div>
+</header>
+<div id="main">
+<div id="left">
+<div id="canvaswrap">
+<!-- <svg id="sld" viewBox="0 0 1180 720" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"> -->
+<svg id="sld" viewBox="115 8 990 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <!-- ===================== COMMON DISTRIBUTION BUSBAR (11kV) ===================== -->
+  <g id="grpBusDist" data-tip="busdist" class="tip-target">
+    <rect x="90" y="556" width="1000" height="34" rx="12" fill="#c8f0d8" stroke="#2a8a50" stroke-width="2.5"/>
+    <rect x="90" y="556" width="1000" height="34" rx="12" fill="none" stroke="#50d080" stroke-width="1.5" class="abus" opacity=".8"/>
+    <text x="108" y="571" font-family="Barlow Condensed" font-size="13" font-weight="700" fill="#1a5a30">COMMON DISTRIBUTION BUSBAR · 11 kV</text>
+    <text x="108" y="585" font-family="Barlow Condensed" font-size="10.5" fill="#2a7a40">Aggregated PV infeed → distribution network</text>
+  </g>
+  <!-- grid tie / outgoing feeder -->
+  <line x1="590" y1="590" x2="590" y2="640" stroke="#2a8a50" stroke-width="3"/>
+  <polygon points="578,640 602,640 590,660" fill="#2a8a50"/>
+  <text x="590" y="678" text-anchor="middle" font-family="Barlow Condensed" font-size="11" font-weight="700" fill="#1a5a30">DISTRIBUTION GRID</text>
+
+  <!-- ===================== 3 PLANT BRANCHES ===================== -->
+  <!-- Branch template positions: PLANT centers x = 270, 590, 910 -->
+</svg>
+</div>
+</div>
+<div id="resizer" title="Drag to resize"></div>
+<div id="right">
+  <div class="row2">
+    <div class="panel">
+      <h3>▶ SIMULATION SETUP</h3>
+      <div class="cs-row">
+        <div class="cs-box">
+          <div class="cs-title">SOLAR PLANT</div>
+          <select id="plantSel" class="cs-sel">
+            <option value="1">Plant&nbsp;I</option>
+            <option value="2">Plant&nbsp;II</option>
+            <option value="3">Plant&nbsp;III</option>
+          </select>
+        </div>
+        <div class="cs-box">
+          <div class="cs-title">ARCHITECTURE FAMILY</div>
+          <select id="modelSel" class="cs-sel">
+            <option value="LSTM" selected>LSTM</option>
+            <option value="GRU">GRU</option>
+            <option value="Transformer">Transformer</option>
+          </select>
+        </div>
+      </div>
+      <div class="cfg-box" id="cfgBox">Loading…</div>
+      <div class="load-err" id="loadErr">
+        <div><b>⚠ Could not read the CSVs.</b> <span id="loadErrMsg"></span></div>
+        <div style="margin-top:3px;">Place this file at <code>Sim/Site-02/index.html</code> and serve the project root (VS Code Live Server, or <code>python -m http.server</code>) so it can read <code>Sim/Site-02/*.csv</code>. Or select the 4 CSVs manually:</div>
+        <input type="file" id="filePicker" multiple accept=".csv">
+      </div>
+      <div class="tsbox">
+        <div class="tslbl">TIMESTAMP</div>
+        <div class="tsval">
+          <div id="tsMain">—</div>
+          <div class="sub">HOUR <span id="tsIdx">0</span> / <span id="tsMax">0</span> · DAY <span id="tsDay">0</span></div>
+        </div>
+      </div>
+      <div class="ctr">
+        <button id="btnPlay">▶ PLAY</button>
+        <button id="btnReset" class="sec">⟲ RESET</button>
+      </div>
+      <div class="ctr">
+        <button id="btnStep" class="sec">STEP ▸</button>
+        <button id="btnJumpPeak" class="gold">☀ NEXT PEAK</button>
+      </div>
+      <div class="slider-row">
+        <span id="sliderLbl">1</span>
+        <input type="range" id="tsRange" min="0" max="0" value="0" step="1">
+        <span class="spd-inline">SPEED</span>
+        <select id="speedSel">
+          <option value="900">0.5×</option>
+          <option value="450" selected>1×</option>
+          <option value="180">2.5×</option>
+          <option value="70">6×</option>
+          <option value="25">16×</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>⚠ SYSTEM LOG</h3>
+      <div class="evt-wrap"><div class="evt" id="evtLog"><div class="e info"><span class="ts">--:--</span> Initialising simulator…</div></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>◉ DATA LOG <span class="sub" id="dlSub">— current hour, kW</span></h3>
+    <div class="mtr" id="dataLogGrid" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+      <div class="cell actual"><div class="lbl">ACTUAL</div><div class="val" id="mActual">—</div></div>
+      <div class="cell base"><div class="lbl" id="lBase">BASELINE</div><div class="val" id="mBase">—</div></div>
+      <div class="cell mhsa"><div class="lbl" id="lMhsa">MHSA</div><div class="val" id="mMhsa">—</div></div>
+      <div class="cell tcsa"><div class="lbl" id="lTcsa">TCSA ★</div><div class="val" id="mTcsa">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel charts">
+    <h3>📈 PREDICTION vs ACTUAL <span class="sub">— revealed hour-by-hour (24-h day-ahead)</span></h3>
+    <div class="ts-body">
+    <div class="chart tall">
+      <div class="lbl">
+        <span>PV GENERATION — kW</span>
+        <span>
+          <span class="legend-chip"><i style="background:#1a6ad0"></i>Actual</span>
+          <span class="legend-chip" id="lgBase"><i style="background:#2a9a5a"></i>Baseline</span>
+          <span class="legend-chip"><i style="background:#e0a020"></i>MHSA</span>
+          <span class="legend-chip"><i style="background:#e05a10"></i>TCSA</span>
+        </span>
+      </div>
+      <svg id="chartMain" viewBox="0 0 640 190" preserveAspectRatio="none"></svg>
+    </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>◈ LIVE CUMULATIVE ERROR <span class="sub">(hours 1 → t, played so far)</span></h3>
+    <div class="mtr" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="cell tcsa"><div class="lbl">TCSA · MAE (kW)</div><div class="val" id="cMAE">—</div></div>
+      <div class="cell tcsa"><div class="lbl">TCSA · RMSE (kW)</div><div class="val" id="cRMSE">—</div></div>
+      <div class="cell tcsa"><div class="lbl">TCSA · R² (%)</div><div class="val" id="cR2">—</div></div>
+    </div>
+    <div class="pi-note" id="liveNote">Cumulative error of the proposed TCSA model over the hours played so far.</div>
+  </div>
+
+  <div class="panel">
+    <h3>◆ FULL TEST-SET EVALUATION <span class="sub" id="benchSub">— reported metrics · TCSA (proposed) best in family</span></h3>
+    <table class="bench" id="benchTable">
+      <thead><tr><th style="text-align:left">Model</th><th>MAE (kW)</th><th>RMSE (kW)</th><th>R² (%)</th><th>rRMSE (%)</th><th>PS (%)</th></tr></thead>
+      <tbody id="benchBody"></tbody>
+    </table>
+    <div class="pi-note">Source: <b>Sim/Site-02/AllPlants-Metrics.csv</b> (full test set). Lower MAE / RMSE / rRMSE and higher R² / PS are better; PS = skill vs family baseline. ★ = best in column.</div>
+  </div>
+</div>
+</div>
+<div id="tip"></div>
+<footer>
+  <div class="lg"><div class="ld" style="background:#e0a020"></div><span style="color:#ffd24a">PV Plants I·II·III</span></div>
+  <div class="lg"><div class="ld" style="background:#4a9ad4"></div><span>PV Inverter (MPPT · DC/AC)</span></div>
+  <div class="lg"><div class="ld" style="background:#c04040"></div><span style="color:#ff9a9a">Circuit Breaker</span></div>
+  <div class="lg"><div class="ld" style="background:#8a5ab8"></div><span style="color:#c8a8e8">BESS · BMS</span></div>
+  <div class="lg"><div class="ld" style="background:#2a8a50"></div><span style="color:#40d090">11 kV Distribution Busbar</span></div>
+  <span style="margin-left:auto;color:#6a9ab8;font-size:9px;">DATA: Sim/Site-02/ · HOVER SLD FOR DETAILS · PLAY TO STEP THROUGH HOURS</span>
+</footer>
+
+<script>
+/* data loaded live from CSV — see loadAll() */
+</script>
+<script>
+/* ============================================================
+   IAD — Interactive Analytical Dashboard  (logic)
+   Data: embedded PLANT_DATA + FULL_METRICS (also loadable from
+   Sim/Site-02/SolarPlant{1,2,3}_Predictions.csv when served).
+   ============================================================ */
+const $ = id => document.getElementById(id);
+
+const FAMILY = {
+  LSTM:       {base:'LSTM',            mhsa:'MHSA_LSTM',        tcsa:'TCSA_LSTM',        label:'LSTM'},
+  GRU:        {base:'GRU',             mhsa:'MHSA_GRU',         tcsa:'TCSA_GRU',         label:'GRU'},
+  Transformer:{base:null,              mhsa:'MHSA_Transformer', tcsa:'TCSA_Transformer', label:'Transformer'},
+};
+const PLANT_ROMAN = {1:'I', 2:'II', 3:'III'};
+const CX = {1:270, 2:590, 3:910};
+
+const COL = {actual:'#1a6ad0', base:'#2a9a5a', mhsa:'#e0a020', tcsa:'#e05a10'};
+
+/* ---------------- Live data (loaded from CSV only — no embedded copy) ---------------- */
+const DATA_PATH = 'Sim/Site-02/';
+let   BASE = DATA_PATH;                       // resolved at load time
+const BASE_CANDIDATES = ['Sim/Site-02/','./','Site-02/','../Sim/Site-02/','Data/Site-02/'];
+let PLANT_DATA = {};
+let FULL_METRICS = {};
+
+/* ---------------- State ---------------- */
+let plant = 1, modelFam = 'LSTM';
+let D = null;            // current plant data object
+let N = 0, idx = 0;
+let playing = false, timer = null, speed = 450;
+let peaks = [];          // daily peak indices
+
+/* ============================================================
+   Build the single-line diagram (3 PV branches → common busbar)
+   ============================================================ */
+function pvPanel(x, y){
+  // small tilted PV array glyph, top-left at x,y
+  let s = `<g>`;
+  for(let r=0;r<3;r++) for(let c=0;c<4;c++){
+    const px=x+c*19, py=y+r*14;
+    s+=`<rect x="${px}" y="${py}" width="17" height="12" rx="1.5" fill="#173a6a" stroke="#4a9ad4" stroke-width="1"/>`+
+       `<line x1="${px+5.7}" y1="${py}" x2="${px+5.7}" y2="${py+12}" stroke="#4a9ad4" stroke-width=".6"/>`+
+       `<line x1="${px+11.3}" y1="${py}" x2="${px+11.3}" y2="${py+12}" stroke="#4a9ad4" stroke-width=".6"/>`+
+       `<line x1="${px}" y1="${py+6}" x2="${px+17}" y2="${py+6}" stroke="#4a9ad4" stroke-width=".6"/>`;
+  }
+  s+=`</g>`;
+  return s;
+}
+
+function buildBranch(p){
+  const cx = CX[p];
+  const roman = PLANT_ROMAN[p];
+  const busId = {1:'A',2:'B',3:'C'}[p];
+  return `
+  <g id="gPlant${p}">
+    <!-- header chip -->
+    <g data-tip="plant${p}" class="tip-target">
+      <rect x="${cx-72}" y="18" width="144" height="26" rx="13" fill="#fff2d8" stroke="#e0a020" stroke-width="2"/>
+      <text x="${cx}" y="35" text-anchor="middle" font-family="Barlow Condensed" font-size="13" font-weight="700" fill="#9a6a10">SOLAR PLANT ${roman}</text>
+    </g>
+    <!-- PV panels + sun -->
+    <g data-tip="plant${p}" class="tip-target">
+      ${pvPanel(cx-37, 50)}
+      <circle cx="${cx+52}" cy="56" r="9" fill="#f5c030" id="sun${p}"/>
+    </g>
+    <!-- power meter (side-mounted, tapped onto the feeder) -->
+    <line x1="${cx}" y1="111" x2="${cx+22}" y2="111" stroke="#7ad4ff" stroke-width="1.5"/>
+    <circle cx="${cx}" cy="111" r="2.8" fill="#7ad4ff"/>
+    <g transform="translate(${cx+22},96)">
+      <rect x="0" y="0" width="92" height="30" rx="4" fill="#f0f6fc" stroke="#7aa8d4" stroke-width="1.5"/>
+      <text x="46" y="13" text-anchor="middle" font-family="Barlow Condensed" font-size="11" font-weight="700" fill="#1a4a8a" id="pwrAct${p}">0.0 kW</text>
+      <text x="46" y="25" text-anchor="middle" font-family="Barlow Condensed" font-size="9"  font-weight="700" fill="#c06818" id="pwrPred${p}">TCSA 0.0</text>
+    </g>
+    <line id="lnA${p}" x1="${cx}" y1="90" x2="${cx}" y2="192" stroke="#e0a020" stroke-width="3"/>
+    <!-- MPPT controller -->
+    <g data-tip="ctrl${p}" class="tip-target">
+      <rect x="${cx-20}" y="192" width="40" height="40" rx="4" fill="#eef6ff" stroke="#4a9ad4" stroke-width="2.3"/>
+      <rect x="${cx-20}" y="192" width="40" height="40" rx="4" fill="none" stroke="#7ad4ff" stroke-width="1.3" class="abus" opacity=".7"/>
+      <line x1="${cx-20}" y1="232" x2="${cx+20}" y2="192" stroke="#4a9ad4" stroke-width="1.6"/>
+      <line x1="${cx-14}" y1="201" x2="${cx-4}" y2="201" stroke="#2a6aaa" stroke-width="2"/>
+      <line x1="${cx-14}" y1="205.5" x2="${cx-4}" y2="205.5" stroke="#2a6aaa" stroke-width="2" stroke-dasharray="2.5 2"/>
+      <path d="M ${cx+2} 223 q 4.5 -7 9 0 q 4.5 7 9 0" fill="none" stroke="#2a6aaa" stroke-width="2"/>
+      <text x="${cx+26}" y="208" font-family="Barlow Condensed" font-size="11.5" font-weight="700" fill="#2a6aaa">PV Inverter</text>
+      <text x="${cx+26}" y="220" font-family="Barlow Condensed" font-size="9.5" fill="#4a8ab8">MPPT · DC/AC</text>
+    </g>
+    <!-- BESS via BMS (standard plant equipment) -->
+    <g data-tip="bess${p}" class="tip-target">
+      <line id="lnF${p}" x1="${cx-20}" y1="212" x2="${cx-56}" y2="212" stroke="#a078c8" stroke-width="2.2" stroke-dasharray="5 3"/>
+      <rect x="${cx-88}" y="203" width="32" height="18" rx="3" fill="#f6f0fc" stroke="#8a5ab8" stroke-width="2"/>
+      <text x="${cx-72}" y="215.5" text-anchor="middle" font-family="Barlow Condensed" font-size="9.5" font-weight="700" fill="#6a3a98">BMS</text>
+      <line id="lnG${p}" x1="${cx-88}" y1="212" x2="${cx-104}" y2="212" stroke="#a078c8" stroke-width="2.2" stroke-dasharray="5 3"/>
+      <rect x="${cx-142}" y="200" width="38" height="24" rx="3" fill="#f6f0fc" stroke="#8a5ab8" stroke-width="2"/>
+      <line x1="${cx-134}" y1="205" x2="${cx-134}" y2="219" stroke="#8a5ab8" stroke-width="2"/>
+      <line x1="${cx-127}" y1="209" x2="${cx-127}" y2="215" stroke="#8a5ab8" stroke-width="2"/>
+      <line x1="${cx-118}" y1="205" x2="${cx-118}" y2="219" stroke="#8a5ab8" stroke-width="2"/>
+      <line x1="${cx-111}" y1="209" x2="${cx-111}" y2="215" stroke="#8a5ab8" stroke-width="2"/>
+      <text x="${cx-123}" y="237" text-anchor="middle" font-family="Barlow Condensed" font-size="10.5" font-weight="700" fill="#6a3a98">BESS ${roman}</text>
+    </g>
+    <line id="lnB${p}" x1="${cx}" y1="232" x2="${cx}" y2="284" stroke="#e0a020" stroke-width="3"/>
+    <!-- individual LV bus 0.4kV -->
+    <g data-tip="bus${p}" class="tip-target">
+      <rect x="${cx-100}" y="284" width="200" height="28" rx="10" fill="#d4eeff" stroke="#4a9ad4" stroke-width="2.3"/>
+      <rect x="${cx-100}" y="284" width="200" height="28" rx="10" fill="none" stroke="#7ad4ff" stroke-width="1.3" class="abus" opacity=".7"/>
+      <text x="${cx}" y="302" text-anchor="middle" font-family="Barlow Condensed" font-size="12" font-weight="700" fill="#1a4a8a">BUS-${busId} · 0.4 kV</text>
+    </g>
+    <line id="lnC${p}" x1="${cx}" y1="312" x2="${cx}" y2="361" stroke="#4a9ad4" stroke-width="3"/>
+    <!-- step-up transformer 0.4/11kV -->
+    <g data-tip="tr${p}" class="tip-target">
+      <circle cx="${cx}" cy="374" r="13" fill="#eef6ff" stroke="#4a9ad4" stroke-width="2.3"/>
+      <circle cx="${cx}" cy="394" r="13" fill="#eefff6" stroke="#2a8a50" stroke-width="2.3"/>
+      <text x="${cx+18}" y="388" font-family="Barlow Condensed" font-size="10.5" font-weight="700" fill="#2a6aaa">0.4/11kV</text>
+    </g>
+    <line id="lnD${p}" x1="${cx}" y1="407" x2="${cx}" y2="459" stroke="#2a8a50" stroke-width="3"/>
+    <!-- circuit breaker (branch protection) -->
+    <g data-tip="cb${p}" class="tip-target">
+      <rect x="${cx-11}" y="459" width="22" height="22" rx="2" fill="#fff0f0" stroke="#c04040" stroke-width="2.3"/>
+      <line id="cbLine${p}" x1="${cx-7}" y1="470" x2="${cx+7}" y2="470" stroke="#c04040" stroke-width="2.4"/>
+      <text x="${cx+18}" y="474" font-family="Barlow Condensed" font-size="10.5" font-weight="700" fill="#a03030">CB-${roman}</text>
+    </g>
+    <line id="lnE${p}" x1="${cx}" y1="481" x2="${cx}" y2="556" stroke="#2a8a50" stroke-width="3"/>
+  </g>`;
+}
+
+function buildSLD(){
+  const svg = $('sld');
+  // insert branches before the closing comment marker (append into svg)
+  const branches = [1,2,3].map(buildBranch).join('\n');
+  svg.insertAdjacentHTML('beforeend', branches);
+  attachTips();
+}
+
+/* ---------------- Tooltips ---------------- */
+const tipMap = {
+  busdist:{title:'Common Distribution Busbar',rows:[['Voltage','11 kV'],['Role','Aggregated PV infeed'],['Sources','Plant I · II · III']]},
+  plant1:{title:'Solar Plant I',rows:[['Bus','BUS-A 0.4 kV'],['Forecast','24-h day-ahead']]},
+  plant2:{title:'Solar Plant II',rows:[['Bus','BUS-B 0.4 kV'],['Forecast','24-h day-ahead']]},
+  plant3:{title:'Solar Plant III',rows:[['Bus','BUS-C 0.4 kV'],['Forecast','24-h day-ahead']]},
+  ctrl1:{title:'PV Inverter I',rows:[['Function','MPPT · DC/AC conversion']]},
+  ctrl2:{title:'PV Inverter II',rows:[['Function','MPPT · DC/AC conversion']]},
+  ctrl3:{title:'PV Inverter III',rows:[['Function','MPPT · DC/AC conversion']]},
+  bus1:{title:'BUS-A · 0.4 kV',rows:[['Plant','I'],['Type','LV collection']]},
+  bus2:{title:'BUS-B · 0.4 kV',rows:[['Plant','II'],['Type','LV collection']]},
+  bus3:{title:'BUS-C · 0.4 kV',rows:[['Plant','III'],['Type','LV collection']]},
+  tr1:{title:'Step-up TR I',rows:[['Ratio','0.4 / 11 kV']]},
+  tr2:{title:'Step-up TR II',rows:[['Ratio','0.4 / 11 kV']]},
+  tr3:{title:'Step-up TR III',rows:[['Ratio','0.4 / 11 kV']]},
+  cb1:{title:'Circuit Breaker CB-I',rows:[['Function','Branch protection'],['Status','Closed']]},
+  cb2:{title:'Circuit Breaker CB-II',rows:[['Function','Branch protection'],['Status','Closed']]},
+  cb3:{title:'Circuit Breaker CB-III',rows:[['Function','Branch protection'],['Status','Closed']]},
+  bess1:{title:'BESS via BMS — Plant I',rows:[['Role','Energy buffering'],['Coupling','DC side via BMS']]},
+  bess2:{title:'BESS via BMS — Plant II',rows:[['Role','Energy buffering'],['Coupling','DC side via BMS']]},
+  bess3:{title:'BESS via BMS — Plant III',rows:[['Role','Energy buffering'],['Coupling','DC side via BMS']]},
+};
+const tip=$('tip');
+function showTip(id,e){const d=tipMap[id];if(!d)return;let h=`<div class="th">${d.title}</div>`;d.rows.forEach(r=>h+=`<div class="row"><span class="lbl">${r[0]}</span><span class="val">${r[1]}</span></div>`);tip.innerHTML=h;tip.style.display='block';moveTip(e);}
+function moveTip(e){let x=e.clientX+16,y=e.clientY+16;if(x+240>innerWidth)x=e.clientX-250;if(y+180>innerHeight)y=e.clientY-190;tip.style.left=x+'px';tip.style.top=y+'px';}
+function hideTip(){tip.style.display='none';}
+function attachTips(){document.querySelectorAll('[data-tip]').forEach(el=>{const id=el.dataset.tip;el.addEventListener('mouseenter',e=>showTip(id,e));el.addEventListener('mousemove',moveTip);el.addEventListener('mouseleave',hideTip);});}
+
+/* ============================================================
+   Helpers
+   ============================================================ */
+function fmt(v,d=2){return (v==null||isNaN(v))?'—':Number(v).toFixed(d);}
+function fam(){return FAMILY[modelFam];}
+
+function logEvent(ts, msg, cls){
+  const e=document.createElement('div');
+  e.className='e '+(cls||'info');
+  const tShort=(ts||'').slice(5,16);
+  e.innerHTML=`<span class="ts">${tShort}</span> ${msg}`;
+  $('evtLog').appendChild(e);
+  while($('evtLog').children.length>250) $('evtLog').removeChild($('evtLog').firstChild);
+  $('evtLog').scrollTop=$('evtLog').scrollHeight;
+}
+
+function computePeaks(){
+  peaks=[];
+  const days=Math.ceil(N/24);
+  for(let d=0;d<days;d++){
+    let bi=d*24, bv=-1;
+    for(let i=d*24;i<Math.min((d+1)*24,N);i++){ if(D.Actual[i]>bv){bv=D.Actual[i];bi=i;} }
+    if(bv>2) peaks.push(bi);
+  }
+}
+
+/* ============================================================
+   Charts
+   ============================================================ */
+function seriesMax(){
+  const f=fam();
+  let m=0;
+  const keys=['Actual',f.mhsa,f.tcsa]; if(f.base)keys.push(f.base);
+  keys.forEach(k=>{for(const v of D[k]) if(v>m)m=v;});
+  return Math.max(m,1);
+}
+let YMAX=1;
+
+function linePath(key, upto, W, H, ymax, top, bot){
+  const plotH=H-top-bot;
+  let s='';
+  for(let i=0;i<=upto;i++){
+    const x=(i/(N-1))*W;
+    const y=H-bot-(D[key][i]/ymax)*plotH;
+    s+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+  }
+  return s;
+}
+function ghostPath(key, W, H, ymax, top, bot){
+  const plotH=H-top-bot; let s='';
+  for(let i=0;i<N;i++){const x=(i/(N-1))*W;const y=H-bot-(D[key][i]/ymax)*plotH;s+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);}
+  return s;
+}
+function dayTicks(W,H){
+  let s='';
+  for(let d=0; d*24<N; d++){
+    const x=((d*24)/(N-1))*W;
+    s+=`<line x1="${x.toFixed(1)}" y1="0" x2="${x.toFixed(1)}" y2="${H}" stroke="#dbe6f0" stroke-width="1"/>`;
+    s+=`<text x="${(x+3).toFixed(1)}" y="${H-3}" font-family="Barlow Condensed" font-size="8" fill="#9db2c6">D${d+1}</text>`;
+  }
+  return s;
+}
+
+function drawMain(){
+  const W=640,H=190,top=8,bot=16;
+  const f=fam();
+  let s=dayTicks(W,H);
+  // faint full-actual ghost for horizon context
+  s+=`<path d="${ghostPath('Actual',W,H,YMAX,top,bot)}" fill="none" stroke="${COL.actual}" stroke-width="1" opacity=".16"/>`;
+  // revealed model preds
+  if(f.base) s+=`<path d="${linePath(f.base,idx,W,H,YMAX,top,bot)}" fill="none" stroke="${COL.base}" stroke-width="1.4" opacity=".95"/>`;
+  s+=`<path d="${linePath(f.mhsa,idx,W,H,YMAX,top,bot)}" fill="none" stroke="${COL.mhsa}" stroke-width="1.4" stroke-dasharray="4 2" opacity=".95"/>`;
+  s+=`<path d="${linePath(f.tcsa,idx,W,H,YMAX,top,bot)}" fill="none" stroke="${COL.tcsa}" stroke-width="2" opacity=".98"/>`;
+  // revealed actual (bold)
+  s+=`<path d="${linePath('Actual',idx,W,H,YMAX,top,bot)}" fill="none" stroke="${COL.actual}" stroke-width="1.8"/>`;
+  // cursor
+  const cx=(idx/(N-1))*W;
+  s+=`<line x1="${cx.toFixed(1)}" y1="0" x2="${cx.toFixed(1)}" y2="${H}" stroke="#c03020" stroke-width="1.3"/>`;
+  // marker dot at current actual & tcsa
+  const yA=H-bot-(D.Actual[idx]/YMAX)*(H-top-bot);
+  const yT=H-bot-(D[f.tcsa][idx]/YMAX)*(H-top-bot);
+  s+=`<circle cx="${cx.toFixed(1)}" cy="${yA.toFixed(1)}" r="2.6" fill="${COL.actual}"/>`;
+  s+=`<circle cx="${cx.toFixed(1)}" cy="${yT.toFixed(1)}" r="2.6" fill="${COL.tcsa}"/>`;
+  s+=`<text x="3" y="11" font-family="Barlow Condensed" font-size="8.5" fill="#7a92aa">${YMAX.toFixed(0)} kW</text>`;
+  $('chartMain').innerHTML=s;
+}
+
+
+/* ============================================================
+   Metrics
+   ============================================================ */
+function liveCumulative(){
+  const f=fam();
+  let sAbs=0, sSq=0, sAct=0, n=idx+1;
+  for(let i=0;i<=idx;i++){ sAct+=D.Actual[i]; }
+  const meanAct=sAct/n;
+  let ssTot=0;
+  for(let i=0;i<=idx;i++){
+    const e=D[f.tcsa][i]-D.Actual[i];
+    sAbs+=Math.abs(e); sSq+=e*e;
+    ssTot+=(D.Actual[i]-meanAct)*(D.Actual[i]-meanAct);
+  }
+  const mae=sAbs/n, rmse=Math.sqrt(sSq/n);
+  const r2 = ssTot>1e-6 ? (1 - sSq/ssTot) : null;
+  return {mae,rmse,r2};
+}
+function renderLive(){
+  const {mae,rmse,r2}=liveCumulative();
+  $('cMAE').textContent  = fmt(mae,3);
+  $('cRMSE').textContent = fmt(rmse,3);
+  $('cR2').textContent   = (r2==null)?'—':fmt(r2*100,2);   // R² as %
+}
+
+function renderBench(){
+  const f=fam();
+  const M=FULL_METRICS[plant];
+  const rows=[];
+  if(f.base) rows.push(['r-base', f.label, M[f.base]]);
+  rows.push(['r-mhsa','MHSA-'+f.label, M[f.mhsa]]);
+  rows.push(['r-tcsa','TCSA-'+f.label+' ★', M[f.tcsa]]);
+  const vals=rows.map(r=>r[2]);
+  const bestMAE=Math.min(...vals.map(v=>v.MAE));
+  const bestRMSE=Math.min(...vals.map(v=>v.RMSE));
+  const bestR2=Math.max(...vals.map(v=>v.R2));
+  const bestRR=Math.min(...vals.map(v=>v.rRMSE));
+  const psVals=vals.map(v=>v.PS).filter(v=>v!=null);
+  const bestPS=psVals.length?Math.max(...psVals):null;
+  const mark=(v,b)=>(b!=null&&Math.abs(v-b)<1e-9)?'<span class="best">★</span>':'';
+  let html='';
+  rows.forEach(([cls,name,m])=>{
+    const ps=(m.PS==null)?'<span style="color:#9db2c6">—</span>':m.PS.toFixed(2)+mark(m.PS,bestPS);
+    html+=`<tr class="${cls}">`+
+      `<td class="model">${name}</td>`+
+      `<td class="num">${m.MAE.toFixed(3)}${mark(m.MAE,bestMAE)}</td>`+
+      `<td class="num">${m.RMSE.toFixed(3)}${mark(m.RMSE,bestRMSE)}</td>`+
+      `<td class="num">${m.R2.toFixed(2)}${mark(m.R2,bestR2)}</td>`+
+      `<td class="num">${m.rRMSE.toFixed(2)}${mark(m.rRMSE,bestRR)}</td>`+
+      `<td class="num">${ps}</td>`+
+      `</tr>`;
+  });
+  $('benchBody').innerHTML=html;
+}
+
+/* ============================================================
+   SLD live update
+   ============================================================ */
+function setFlow(id, active, rev=false){
+  const el=$(id); if(!el)return;
+  el.classList.remove('flow-active','flow-rev','dim');
+  el.classList.add(active?(rev?'flow-rev':'flow-active'):'dim');
+}
+function updateSLD(){
+  const f=fam();
+  [1,2,3].forEach(p=>{
+    const g=$('gPlant'+p);
+    if(p===plant){g.classList.add('sel-plant');g.classList.remove('deselected');}
+    else {g.classList.remove('sel-plant');g.classList.add('deselected');}
+    const act=PLANT_DATA[p].Actual[idx];
+    const pred=PLANT_DATA[p][fam().tcsa][idx];
+    $('pwrAct'+p).textContent=fmt(act,1)+' kW';
+    $('pwrPred'+p).textContent='TCSA '+fmt(pred,1);
+    const gen=act>0.5;
+    setFlow('lnA'+p, gen);                                   // PV string energized only while generating
+    ['lnB','lnC','lnD'].forEach(pre=>setFlow(pre+p, true));  // plant-side path always live (PV by day, BESS by night)
+    const cbClosed = (p===plant);                            // only the selected plant's breaker is closed
+    const cbl=$('cbLine'+p);
+    if(cbl) cbl.setAttribute('transform', cbClosed ? '' : `rotate(-35 ${CX[p]} 470)`);
+    if(tipMap['cb'+p]) tipMap['cb'+p].rows[1][1] = cbClosed ? 'Closed' : 'Open';
+    setFlow('lnE'+p, cbClosed);                              // no export through an open breaker
+    setFlow('lnF'+p, true, !gen);                            // inverter<->BMS: charge (->BESS) by day, discharge (->grid) by night
+    setFlow('lnG'+p, true, !gen);                            // BMS<->BESS
+    const sun=$('sun'+p);
+    if(sun){ sun.style.opacity=gen?'1':'.25'; sun.style.fill=gen?'#f5c030':'#9aa4ac'; }
+  });
+}
+
+/* ============================================================
+   Per-step render
+   ============================================================ */
+let prevGen = {1:0,2:0,3:0};
+function render(){
+  if(N===0)return;
+  const f=fam();
+  const actual=D.Actual[idx];
+  const base=f.base?D[f.base][idx]:null;
+  const mhsa=D[f.mhsa][idx], tcsa=D[f.tcsa][idx];
+
+  $('mActual').innerHTML=fmt(actual,1)+'<span class="u">kW</span>';
+  $('mBase').innerHTML=(base==null)?'<span style="color:#9db2c6">n/a</span>':fmt(base,1)+'<span class="u">kW</span>';
+  $('mMhsa').innerHTML=fmt(mhsa,1)+'<span class="u">kW</span>';
+  $('mTcsa').innerHTML=fmt(tcsa,1)+'<span class="u">kW</span>';
+
+  const ts=D.ts[idx];
+  $('tsMain').textContent=ts;
+  $('tsIdx').textContent=idx+1;
+  $('tsDay').textContent=Math.floor(idx/24)+1;
+  $('tsRange').value=idx;
+  $('sliderLbl').textContent=idx+1;
+
+  drawMain(); renderLive(); updateSLD();
+
+  // event log: sunrise / sunset for selected plant, daily peak, TCSA tracking
+  const gen = actual>0.5 ? 1 : 0;
+  if(gen!==prevGen[plant]){
+    if(gen) logEvent(ts, `☀ Plant ${PLANT_ROMAN[plant]} sunrise — PV infeed begins`, 'good');
+    else    logEvent(ts, `🌙 Plant ${PLANT_ROMAN[plant]} sunset — infeed ceased`, 'info');
+  }
+  prevGen[plant]=gen;
+  if(peaks.includes(idx)){
+    const err=Math.abs(tcsa-actual);
+    logEvent(ts, `Peak ${fmt(actual,1)} kW · TCSA ${fmt(tcsa,1)} kW (Δ ${fmt(err,1)})`, 'warn');
+  }
+}
+
+/* ============================================================
+   Playback
+   ============================================================ */
+function setStatus(){
+  $('sysSts').classList.toggle('play', playing);
+  $('sysSts').textContent = playing ? 'RUNNING · STEPPING HOURS' : 'READY';
+}
+function step(){
+  if(idx<N-1){idx++;render();}
+  else{pause();logEvent(D.ts[N-1],'Simulation complete — full horizon played','good');}
+}
+function play(){ if(playing||N===0)return; playing=true;$('btnPlay').textContent='⏸ PAUSE';setStatus();timer=setInterval(step,speed); }
+function pause(){ playing=false;$('btnPlay').textContent='▶ PLAY';setStatus();if(timer){clearInterval(timer);timer=null;} }
+
+$('btnPlay').onclick=()=>playing?pause():play();
+$('btnReset').onclick=()=>{pause();idx=0;prevGen={1:0,2:0,3:0};$('evtLog').innerHTML=`<div class="e info"><span class="ts">--:--</span> Plant ${PLANT_ROMAN[plant]} · ${modelFam} — reset</div>`;render();};
+$('btnStep').onclick=()=>{pause();step();};
+$('btnJumpPeak').onclick=()=>{pause();const nx=peaks.find(p=>p>idx);idx=(nx!=null)?nx:(peaks[0]??idx);render();};
+$('tsRange').oninput=e=>{pause();idx=parseInt(e.target.value);render();};
+$('speedSel').onchange=e=>{speed=parseInt(e.target.value);if(playing){pause();play();}};
+
+/* ============================================================
+   Config / selection
+   ============================================================ */
+function updateCfg(){
+  const f=fam();
+  $('cfgBox').innerHTML =
+    `<b>Solar Plant ${PLANT_ROMAN[plant]}</b> · ${f.label} family`+
+    ` &nbsp;|&nbsp; day-ahead 24-h · ${N}-h test horizon`;
+  // family-dependent data-log labels
+  $('lBase').textContent = f.base?f.label.toUpperCase():'BASELINE (n/a)';
+  $('lMhsa').textContent = 'MHSA-'+f.label.slice(0,5);
+  $('lTcsa').textContent = 'TCSA-'+f.label.slice(0,5)+' ★';
+  $('lgBase').style.display = f.base?'inline-flex':'none';
+  $('liveNote').textContent = f.base
+    ? 'Cumulative error of the proposed TCSA model over the hours played so far.'
+    : 'Transformer family has no plain baseline; showing cumulative error of the proposed TCSA model over the hours played so far.';
+}
+
+function selectDataset(resetLog){
+  pause();
+  if(!PLANT_DATA[plant]){ return; }
+  D = PLANT_DATA[plant];
+  N = D.ts.length;
+  idx = 0; prevGen={1:0,2:0,3:0};
+  YMAX=seriesMax();
+  computePeaks();
+  $('tsRange').max=N-1; $('tsMax').textContent=N;
+  sysSts.classList.remove('play'); sysSts.textContent='READY';
+  if(resetLog) $('evtLog').innerHTML=`<div class="e info"><span class="ts">--:--</span> Loaded Plant ${PLANT_ROMAN[plant]} · ${modelFam} family · ${N} h</div>`;
+  updateCfg(); renderBench(); render();
+}
+
+$('plantSel').onchange=e=>{plant=+e.target.value;selectDataset(true);};
+$('modelSel').onchange=e=>{modelFam=e.target.value;selectDataset(true);};
+$('filePicker').onchange=e=>loadFromFiles(Array.from(e.target.files));
+
+/* ============================================================
+   Data loading — CSV is the single source of truth.
+   Reads Sim/Site-02/SolarPlant{1,2,3}_Predictions.csv and
+   AllPlants-Metrics.csv. No embedded fallback: if the files
+   can't be read, the UI says so and offers a manual picker.
+   ============================================================ */
+const DISP_COLS = ['Actual_kW','LSTM_kW','MHSA_LSTM_kW','TCSA_LSTM_kW','GRU_kW','MHSA_GRU_kW','TCSA_GRU_kW','MHSA_Transformer_kW','TCSA_Transformer_kW'];
+const DISP_KEYS = ['Actual','LSTM','MHSA_LSTM','TCSA_LSTM','GRU','MHSA_GRU','TCSA_GRU','MHSA_Transformer','TCSA_Transformer'];
+
+function splitCSV(text){ return text.replace(/^\uFEFF/,'').trim().split(/\r?\n/); }
+
+function parseDispatch(text){
+  const lines=splitCSV(text);
+  const hdr=lines[0].split(',').map(s=>s.trim());
+  const iTs=hdr.indexOf('Timestamp');
+  const idxOf=DISP_COLS.map(c=>hdr.indexOf(c));
+  const obj={ts:[]}; DISP_KEYS.forEach(k=>obj[k]=[]);
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    const c=lines[i].split(',');
+    obj.ts.push((c[iTs]||'').slice(0,16));
+    idxOf.forEach((ci,j)=>obj[DISP_KEYS[j]].push(+c[ci]));
+  }
+  return obj;
+}
+
+function parseMetrics(text){
+  const lines=splitCSV(text);
+  const hdr=lines[0].split(',').map(s=>s.trim().toLowerCase());
+  const col=n=>hdr.findIndex(h=>h.startsWith(n));
+  const iP=col('plant'),iM=col('model'),iMae=col('mae'),iR=col('rmse'),iR2=col('r2'),iRr=col('rrmse'),iPs=col('ps');
+  const out={};
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    const c=lines[i].split(',');
+    const p=String(parseInt(c[iP])), k=c[iM].trim().replace(/-/g,'_');
+    const ps=c[iPs];
+    (out[p]=out[p]||{})[k]={MAE:+c[iMae],RMSE:+c[iR],R2:+c[iR2],rRMSE:+c[iRr],
+      PS:(ps===undefined||ps.trim()==='')?null:+ps};
+  }
+  return out;
+}
+
+async function fetchText(name){
+  const r=await fetch(BASE+name,{cache:'no-store'});
+  if(!r.ok) throw new Error(`HTTP ${r.status} on ${BASE}${name}`);
+  return await r.text();
+}
+
+async function findBase(){
+  for(const b of BASE_CANDIDATES){
+    try{ const r=await fetch(b+'SolarPlant1_Predictions.csv',{cache:'no-store'}); if(r.ok){ return b; } }catch(e){}
+  }
+  return null;
+}
+
+async function loadAll(){
+  sysSts.textContent='LOADING CSV…';
+  const b=await findBase();
+  if(b===null){ showLoadErr(new Error('SolarPlant#_Predictions.csv not found near this page.')); return; }
+  BASE=b;
+  try{
+    const [d1,d2,d3,m]=await Promise.all([
+      fetchText('SolarPlant1_Predictions.csv'),
+      fetchText('SolarPlant2_Predictions.csv'),
+      fetchText('SolarPlant3_Predictions.csv'),
+      fetchText('AllPlants-Metrics.csv'),
+    ]);
+    PLANT_DATA={1:parseDispatch(d1),2:parseDispatch(d2),3:parseDispatch(d3)};
+    FULL_METRICS=parseMetrics(m);
+    $('loadErr').style.display='none';
+    logEvent('', 'Loaded live CSVs from '+BASE, 'good');
+    selectDataset(true);
+  }catch(err){ showLoadErr(err); }
+}
+
+function showLoadErr(err){
+  $('loadErrMsg').textContent = (location.protocol==='file:')
+    ? 'The browser blocks file:// reads. Serve the project folder, then reload.'
+    : (err && err.message ? err.message : String(err));
+  $('loadErr').style.display='block';
+  sysSts.textContent='CSV NOT LOADED';
+  sysSts.classList.add('play');
+}
+
+async function loadFromFiles(files){
+  try{
+    for(const f of files){
+      let mm=f.name.match(/SolarPlant(\d)_Predictions\.csv$/i);
+      if(mm){ PLANT_DATA[mm[1]]=parseDispatch(await f.text()); continue; }
+      if(/AllPlants-Metrics\.csv$/i.test(f.name)){ FULL_METRICS=parseMetrics(await f.text()); }
+    }
+    if(PLANT_DATA[1]&&PLANT_DATA[2]&&PLANT_DATA[3]&&Object.keys(FULL_METRICS).length){
+      $('loadErr').style.display='none'; sysSts.classList.remove('play');
+      logEvent('', 'Loaded CSVs from manual selection', 'good');
+      selectDataset(true);
+    } else {
+      $('loadErrMsg').textContent='Select all 4 files: the 3 SolarPlant#_Predictions.csv and AllPlants-Metrics.csv.';
+    }
+  }catch(err){ showLoadErr(err); }
+}
+
+/* ---------------- Resizer ---------------- */
+(function(){
+  const rz=$('resizer'), rp=$('right'), main=$('main');
+  let drag=false;
+  rz.addEventListener('mousedown',e=>{drag=true;rz.classList.add('active');document.body.classList.add('resizing');e.preventDefault();});
+  window.addEventListener('mousemove',e=>{if(!drag)return;const r=main.getBoundingClientRect();let w=r.right-e.clientX;const min=500,max=Math.min(920,r.width-320);if(w<min)w=min;if(w>max)w=max;rp.style.width=w+'px';});
+  window.addEventListener('mouseup',()=>{if(!drag)return;drag=false;rz.classList.remove('active');document.body.classList.remove('resizing');});
+  rz.addEventListener('dblclick',()=>rp.style.width='660px');
+})();
+
+/* ---------------- Boot ---------------- */
+$('plantSel').value=plant; $('modelSel').value=modelFam;
+buildSLD();
+loadAll();
+
+</script>
+</body>
+</html>
