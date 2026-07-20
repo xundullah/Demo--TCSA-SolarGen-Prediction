@@ -1,4 +1,4 @@
-# MLS-DL — Multilayer Stacked Deep Learning with Temporal Context Self-Attention (TCSA)
+# Improving Day-Ahead Photovoltaic Power Forecasting with TCSA
 
 **PV power-generation forecasting for solar plants.** This repository is the
 research pipeline and interactive simulator behind a study that proposes
