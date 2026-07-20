@@ -21,8 +21,8 @@ Eight deep-learning forecasting models — **LSTM**, **GRU**, and
 **Transformer**, each in a **baseline**, **MHSA**, and **TCSA (proposed)**
 variant (Transformer has no plain baseline; MHSA is its reference) — are
 trained on 168 h (7-day) input windows to predict the next 24 h of PV
-generation, for three solar plants at **Site-02 (Gyeongju-si,
-Gyeongsangbuk-do, South Korea)**.
+generation, for three solar plants at the **Site** located in **Gyeongju-si,
+Gyeongsangbuk-do, South Korea**.
 
 | Family      | Baseline | MHSA (typical) | TCSA (proposed) |
 |-------------|----------|-----------------|------------------|
@@ -119,7 +119,7 @@ index.html                          SPFS - Solar-Plant Forecasting Simulator (se
 
 1. **Pre-processed input** — `Export/Data/Site#02_Data.gzip` holds hourly PV
    inverter output (plants `...G0001`, `...G0003`, `...G0004`) and
-   weather-station readings (station `...G4001`) for Site-02
+   weather-station readings (station `...G4001`) for the Site 02
    (Gyeongju-si, Gyeongsangbuk-do).
 2. **Data preparation** (`Code/Site02_DataPreparation.ipynb`) — cleans
    outliers/gaps using `Library/dataProcessing.py` (harmonic-climatology
